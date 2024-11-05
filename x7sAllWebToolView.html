@@ -1,0 +1,230 @@
+
+<template>
+    <div class="NcpAllWebToolView " id="NcpAllWebToolViewTop">
+        
+    <div class="spinner">
+        <template if:true={isLoading}>
+            <lightning-spinner alternative-text="Loading" variant="brand" size="large"></lightning-spinner>
+        </template>
+    </div>
+        <template if:true={showFilter}>
+            <!-- <lightning-layout multiple-rows="true" class="slds-m-bottom_x-large">
+                <lightning-layout-item size="12" small-device-size="12" medium-device-size="12" large-device-size="12" class="">
+                    <div class="mainHeading">Web Tools</div>
+                </lightning-layout-item>
+             </lightning-layout> -->
+            <lightning-layout multiple-rows="true" class="slds-m-bottom_x-large">
+                <lightning-layout-item size="12" small-device-size="12" medium-device-size="12" large-device-size="2" class="slds-p-left_small">
+                    <span class="webToolTitle">{totalRecord} Web Tools</span>
+                </lightning-layout-item>
+                <lightning-layout-item size="12" small-device-size="12" medium-device-size="12" large-device-size="4">
+                    <lightning-input name="Name" type="search" variant="label-hidden" placeholder="Filter..." value={nameValue} onchange={handleEnter} class="inputSearch">
+                    </lightning-input>
+                </lightning-layout-item>
+                <lightning-layout-item size="12" small-device-size="12" medium-device-size="12" large-device-size="6">
+                </lightning-layout-item>
+            </lightning-layout>
+            <lightning-layout multiple-rows="true" class="slds-m-bottom_xx-large">
+                <template for:each={webToolFilterResult} for:item="item">
+                    <lightning-layout-item size="12" key={item.fieldAPIName} small-device-size="12" medium-device-size="12" large-device-size="3" class="slds-p-left_small">
+                        <div>
+                            <label class="custom-combobox-label slds-form-element__label comboboxTitle">{item.label}</label>
+                            <lightning-combobox name={item.fieldAPIName} label={item.label} value="" options={item.Values} onchange={handleChange} placeholder="" variant="label-hidden">
+                            </lightning-combobox>
+                        </div>
+                    </lightning-layout-item>
+                </template>
+                <lightning-layout-item size="12" small-device-size="12" medium-device-size="12" large-device-size="3" class="slds-p-left_small" style="display: flex; justify-content: center;">
+                    <template if:true={showWebToolICanAccessFilter}>
+                        <div class="slds-p-top_x-large slds-p-left_medium"><input type="checkbox" name="webToolAccessCheckbox" value="true" onclick={webToolAccessFilter} checked /> <span class="checkboxTitle">Web tools I can access</span></div>
+                    </template>
+                    <template if:false={showWebToolICanAccessFilter}>
+                        <div class="slds-p-top_x-large slds-p-left_medium"><input type="checkbox" name="webToolAccessCheckbox" value="true" onclick={webToolAccessFilter} /> <span class="checkboxTitle">Web tools I can access</span></div>
+                    </template>
+                </lightning-layout-item>
+                <lightning-layout-item size="12" small-device-size="12" medium-device-size="12" large-device-size="3" class="slds-p-left_small">
+                    <template if:true={showQuickReferenceGuideFilter}>
+                        <div class="slds-p-top_x-large"><input type="checkbox" value="true" name="quickReferenceCheckbox" onclick={quickReferenceFilter} checked /> <span class="checkboxTitle">Quick reference guide available</span></div>
+                    </template>
+                    <template if:false={showQuickReferenceGuideFilter}>
+                        <div class="slds-p-top_x-large"><input type="checkbox" value="true" name="quickReferenceCheckbox" onclick={quickReferenceFilter} /> <span class="checkboxTitle">Quick reference guide available</span></div>
+                    </template>
+
+                </lightning-layout-item>
+            </lightning-layout>
+        </template>
+        <lightning-layout if:true={displayResetButton} multiple-rows="true" class="slds-m-bottom_x-large">
+
+            <lightning-layout-item size="12" small-device-size="12" medium-device-size="12" large-device-size="12" class="slds-p-left_small">
+                <lightning-button variant="Neutral" label="Reset Filter" class="slds-m-left_x-small" onclick={resetFilter}></lightning-button>
+            </lightning-layout-item>
+        </lightning-layout>
+        <lightning-layout multiple-rows="true" class="slds-m-bottom_x-large">
+            <lightning-layout-item size="12" small-device-size="12" medium-device-size="12" large-device-size="12" class="slds-p-left_small slds-m-bottom_large">
+                <a class="modalPopUpTitle" onclick={openModalPopup}>Which segment is best for me?</a>
+            </lightning-layout-item>
+            <template if:true={isEmployee}>
+                <lightning-layout-item size="12" small-device-size="12" medium-device-size="12" large-device-size="12" class="slds-p-left_small slds-m-bottom_large">
+                    <p style="font-size:16px;color:#000000;"> **If you receive an “Access Denied” page for any web tool you launch, you can request access <a href={employeeportalurl} target="_blank" class="modalPopUpTitle1">here</a> </p>
+                </lightning-layout-item>
+            </template>
+        </lightning-layout>
+        <template if:true={displayNoResult}>
+            <lightning-layout multiple-rows="true">
+                <lightning-layout-item size="12" small-device-size="12" medium-device-size="12" large-device-size="12" class="slds-p-left_xx-small slds-m-bottom_large" style="text-align:center;">
+                    No Record Found
+                </lightning-layout-item>
+            </lightning-layout>
+        </template>
+        <template if:false={displayNoResult}>
+            <lightning-layout multiple-rows="true">
+                <template for:each={visibleResult} for:item="item">
+                    <lightning-layout-item size="6" key={item.Id} small-device-size="6" medium-device-size="6" large-device-size="3" class="slds-m-bottom_small slds-p-horizontal_xx-small">
+                        <lightning-card class="cardWidth" data-id={item.Id}>
+                            <template if:true={item.Has_Reference_guide__c}>
+                                <div class="icon"><img src={WebToolReferenceGuideIcon} class="webToolReferenceGuideIcon"></div>
+                            </template>
+
+                            <!--<div class="slds-m-left_medium"><img src={item.webToolLogo} data-id={item.Id} class="webToolLogo" data-name={item.Name} onclick={requestDetailPage}></div>
+                            <div class="cardTitle slds-m-horizontal_medium slds-m-top_medium"><a data-id={item.Id} data-name={item.Name} onclick={requestDetailPage}>{item.Name}</a></div>-->
+
+                            <!--changes made by santosh start-->
+                            <template if:true={item.displayRequestAccess}>
+                                <template if:true={isEmployee}>
+                                    <div class="slds-m-left_medium"><img src={item.webToolLogo} data-id={item.Id} class="webToolLogo" data-name={item.Name}></div>
+                                    <div class="cardTitle slds-m-horizontal_medium slds-m-top_medium"><a data-id={item.Id} data-name={item.Name} onclick={requestLaunchURLEmployee}>{item.Name}</a></div>
+
+                                </template>
+                                <template if:false={isEmployee}>
+                                    <div class="slds-m-left_medium"><img src={item.webToolLogo} data-id={item.Id} class="webToolLogo" data-name={item.Name}></div>
+                                    <div class="cardTitle slds-m-horizontal_medium slds-m-top_medium"><a data-id={item.Id} data-name={item.Name} onclick={requestDetailPage}>{item.Name}</a></div>
+                                </template>
+                            </template>
+
+                            <template if:true={item.displayWebToolUrl}>
+
+                                <div class="slds-m-left_medium"><img src={item.webToolLogo} data-id={item.Id} class="webToolLogo" data-name={item.Name}></div>
+                                <div class="cardTitle slds-m-horizontal_medium slds-m-top_medium"><a data-id={item.Id} data-name={item.Name} onclick={requestLaunchURL}>{item.Name}</a></div>
+                            </template>
+                            <!--changes made by santosh end -->
+
+                            <lightning-layout multiple-rows="true">
+                                <lightning-layout-item size="6" small-device-size="6" medium-device-size="6" large-device-size="6">
+                                    <template if:false={item.displayRequestAccess}>
+                                        <div class="cardFavouriteIcon" data-id={item.Id} data-name={item.Name} onclick={handleSavedClick} style="cursor:pointer;">
+                                            <template if:false={item.selected}>
+                                                <img src={bookmarkIcon} />
+                                            </template>
+                                            <template if:true={item.selected}>
+                                                <img src={activeBookmarkIcon} />
+                                            </template>
+                                            <c-n-c-p_-custom-toast-notification></c-n-c-p_-custom-toast-notification>
+                                        </div>
+                                    </template>
+                                </lightning-layout-item>
+                                <lightning-layout-item size="6" small-device-size="6" medium-device-size="6" large-device-size="6">
+                                    <template if:true={item.displayRequestAccess}>
+                                        <template if:false={item.iInitialProvisioningAutomatic}>
+                                            <!--changes made by santosh for Employee Access Start-->
+                                            <template if:true={isEmployee}>
+                                                <div class="cardRequestAccess slds-m-left_medium slds-m-top_xx-large slds-m-top_xx-large"><a data-id={item.Id} data-name={item.Name} onclick={requestDetailPage}>Web Tool Details </a><a data-id={item.Id} data-name={item.Name} onclick={requestDetailPage}></a></div>
+                                            </template>
+                                            <template if:false={isEmployee}>
+                                                <!-- Introduce new IF for PENDING TAYARi -->
+                                                <div class="cardRequestAccess slds-m-left_medium slds-m-top_xx-large slds-m-top_xx-large"><a data-id={item.Id} data-name={item.Name} onclick={requestAccess}>Request Access </a><a data-id={item.Id} data-name={item.Name} onclick={requestAccess}><img src={lockIcon} /></a></div>
+                                            </template>
+                                            <!--changes made by santosh for Employee Access End-->
+                                        </template>
+                                        <template if:true={item.iInitialProvisioningAutomatic}>
+                                            <div class="cardRequestAccess slds-m-left_medium slds-m-top_xx-large slds-m-top_xx-large"><a data-id={item.Id} data-name={item.Name} onclick={requestAccess}>Available To You </a></div>
+                                        </template>
+                                    </template>
+                                    <template if:true={item.displayWebToolUrl}>
+
+                                        <!-- <div class="cardRequestAccess slds-m-left_medium slds-m-top_xx-large slds-m-top_xx-large"><a data-id={item.Id} data-name={item.Name} onclick={requestLaunchURL}>Launch Web Tool  </a><a data-id={item.Id} data-name={item.Name} onclick={requestLaunchURL}><img   src={launchIcon} /></a></div>-->
+
+                                        <!--changes made by santosh start-->
+                                        <div class="cardRequestAccess slds-m-left_medium slds-m-top_xx-large slds-m-top_xx-large"><a data-id={item.Id} data-name={item.Name} onclick={requestDetailPage}>Web Tool Details </a><a data-id={item.Id} data-name={item.Name} onclick={requestDetailPage}>
+                                                <!--<img   src={launchIcon} />--></a></div>
+                                        <!--changes made by santosh End-->
+                                    </template>
+                                </lightning-layout-item>
+                            </lightning-layout>
+                        </lightning-card>
+                    </lightning-layout-item>
+                </template>
+            </lightning-layout>
+            <lightning-layout multiple-rows="true" class="slds-m-bottom_x-large">
+                <lightning-layout-item size="12" small-device-size="12" medium-device-size="12" large-device-size="12" class="slds-p-left_small ">
+                    <c-n-c-p-pagination records={result} record-size={recordSize} onupdate={updateRecordHandler} update-bookmark={updateBookmark}></c-n-c-p-pagination>
+                </lightning-layout-item>
+            </lightning-layout>
+        </template>
+        <template if:false={hideSpinner}>
+            <lightning-spinner alternative-text="Loading...."></lightning-spinner>
+        </template>
+
+        <!-- Added By Sivesh Start -->
+        
+        <template if:true={isShowModal}>
+            <section role="dialog" tabindex="-1" aria-modal="true" aria-labelledby="modal-heading-01" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <!-- modal header start -->
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse .slds-modal__close" title="Close" onclick={hideModalBox}>
+                        <span style="font-size:11.0pt;color:white">X</span>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                    <!-- modal body start -->
+                    <div class="slds-modal__content slds-p-around_medium">
+                        <p style="text-align:center;font-size:large;color:rgb(123, 116, 121);">Thank you for your submission!</p>
+                        <br>
+                        <p style="padding-top:5%;font-size:medium;color:rgb(123, 116, 121);"> We have received your request for additional bnsf.com web tools. Please allow up to 24 hours to be setup properly and a confirmation email will be sent to your email address upon completion. If you have any questions or need further assistance, please feel free to contact eBusiness at 888-428-2673, voice command "Web Support". </p>
+                        <p style="font-size:medium;font-weight:bold;padding-top:4%;color:rgb(123, 116, 121);padding-bottom:5%;"> Thank you, <br> BNSF Customer Support - eBusiness </p>
+                        <!-- <div class="slds-float_right">
+                            <lightning-button variant="brand" label="Ok" onclick={hideModalBox} class="slds-m-left_small"></lightning-button>
+                        </div> -->
+                        <div class="slds-float_right bnsf-support-banner-new">
+                            <button class="slds-m-left_small bnsf-support-banner__button" onclick={hideModalBox}>
+                                OK&nbsp;
+                              </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+    </div>
+
+<template if:true={showError}>
+    <section role="dialog" tabindex="-1" aria-modal="true" aria-labelledby="modal-heading-01" class="slds-modal slds-fade-in-open">
+        <div class="slds-modal__container">
+            <!-- modal header start -->
+            <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse .slds-modal__close" title="Close" onclick={hideModalBox}>
+                <span style="font-size:11.0pt;color:white">X</span>
+                <span class="slds-assistive-text">Close</span>
+            </button>
+            <!-- modal body start -->
+            <div class="slds-modal__content slds-p-around_medium">
+                <template if:true={pendingApproval}>
+                <p style="text-align:center;font-size:large;color:rgb(123, 116, 121);">
+                    Oops! It looks like a request for access is still pending approval. <br>
+                    Please allow 24 - 48 hours for access approval.
+                </p></template>
+                <template if:true={noContact}>
+                    <p style="text-align:center;font-size:large;color:rgb(123, 116, 121);">
+                        Contact is not found. Please contact to your System Administrator.
+                    </p></template>
+                <br>
+                <div class="slds-float_right bnsf-support-banner-new">
+                    <button class="slds-m-left_small bnsf-support-banner__button" onclick={hideModalBox}>
+                        OK&nbsp;
+                      </button>
+                </div>
+            </div>
+        </div>
+    </section>
+    <div class="slds-backdrop slds-backdrop_open"></div>
+</template>
+
+<!-- Added BY Sivesh End -->
+</template>
